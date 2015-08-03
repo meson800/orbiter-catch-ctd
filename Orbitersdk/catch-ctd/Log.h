@@ -28,31 +28,37 @@ public:
     static void decreaseIndent();
 
     template<typename ... Types>
-    //Generic case, prints out using << operator
-    static void writeToLog(IndentString first, Types ... rest)
+    //public case, opens so we only need one open per write
+    static void writeToLog(Types ... rest)
     {
-        std::ofstream logFile = std::ofstream("./catch-ctd.log", std::ios::app);
+        logFile = std::ofstream("./catch-ctd.log", std::ios::app);
+        writeToLogOstream(rest...);
+        logFile.close();
+    }
+
+private:
+    template<typename ... Types>
+    //Generic case, prints out using << operator
+    static void writeToLogOstream(IndentString first, Types ... rest)
+    {
         for (int i = 0; i < indent; ++i)
         {
             logFile << "\t";
         }
-        logFile.close();
         //recurse for other arguments
-        writeToLog(rest...);
+        writeToLogOstream(rest...);
     }
 
     template<typename T, typename ... Types>
     //Generic case, prints out using << operator
-    static void writeToLog(T first, Types ... rest)
+    static void writeToLogOstream(T first, Types ... rest)
     {
-        std::ofstream logFile = std::ofstream("./catch-ctd.log", std::ios::app);
         logFile << first;
-        logFile.close();
         //recurse for other arguments
-        writeToLog(rest...);
+        writeToLogOstream(rest...);
     }
     //base case, write out newline
-    static void writeToLog();
-private:
+    static std::ofstream logFile;
+    static void writeToLogOstream();
     static int indent;
 };

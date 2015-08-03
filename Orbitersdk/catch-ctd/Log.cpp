@@ -43,10 +43,11 @@ std::ostream& operator<<(std::ostream& os, const VESSELSTATUS& vs)
 }
 
 int Log::indent = 0;
+std::ofstream Log::logFile;
 
 void Log::clearLog()
 {
-    std::ofstream logFile = std::ofstream("./catch-ctd.log", std::ios::out);
+    logFile = std::ofstream("./catch-ctd.log", std::ios::out);
     logFile.close();
 }
 
@@ -60,7 +61,7 @@ void Log::decreaseIndent()
     indent--;
 }
 
-void Log::writeToLog()
+void Log::writeToLogOstream()
 {
 
 }
