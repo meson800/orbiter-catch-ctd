@@ -24,38 +24,75 @@ foreach($line in $OAPI_contents)
 		$returnType = $matches['returnType']
 		$returnType = $returnType.trim()
 		$funcName = $matches['funcName']
+		$oapiFuncName = "oapi" + $funcName
+		#generate new func name if we already have one
+		#this is so we can handle overloaded functions
+		if (select-string -SimpleMatch -pattern "OSDK_$funcName)" -InputObject $headerContents)
+		{
+			$index = 2
+			while (select-string -SimpleMatch -pattern ("OSDK_"+ $funcName+ "_overload_" + $index + ")") -InputObject $headerContents)
+			{
+				$index += 1
+			}
+			$funcName = ($funcName+ "_overload_" + $index)
+			echo $funcName
+		}
 		$args = $matches['args']
 		$arg_array = $args.Split(',')
+		$temp_arg_array = @()
 		$argType_array = @()
 		$argName_array = @()
 		foreach($arg in $arg_array)
 		{
+			#remove any default parameters
+			$arg = $arg -replace "=.*", ""
 			#trim whitespace
 			$arg = $arg.trim()
+			$temp_arg_array += $arg
 			$arg -match "\s*(?<argType>.*) (?<argName>\S*)\s*"
 			$argType_array += ($matches['argType'])
 			$argName_array += ($matches['argName'])
 		}
+		$arg_array = $temp_arg_array
 		#now we have all the info we need
 		#write the typedef and the function declaration
 		$header_value = "typedef OAPIFUNC $returnType (*OSDK_$funcName)(" + ($argType_array -join ',') + ');' +
 			"`r`n" + "$returnType  My$funcName(" + ($arg_array -join ',') + ");`r`n"
 		$headerContents += $header_value
-		$functionPointers += "OSDK_$funcName $funcName = oapi$funcName;`r`n"
-		$installHooks += "	DetourAttach(&(PVOID&)$funcName, My$funcName);`r`n"
-		$detachHooks += "	DetourDetach(&(PVOID&)$funcName, My$funcName);`r`n"
+		$functionPointers += "OSDK_$funcName p$funcName = (OSDK_$funcName)$oapiFuncName;`r`n"
+		$installHooks += "currentPointer = 	&(PVOID&)p$funcName;`r`n	Log::writeToLog(`"Original $oapiFuncName :`",currentPointer,`"\n`");`r`n	DetourAttach(currentPointer, My$funcName);`r`n"
+		$detachHooks += "	DetourDetach(&(PVOID&)p$funcName, My$funcName);`r`n"
+		if ($returnType -ne "void")
+		{
 		$functions += 
 @"
 $returnType  My$funcName($($arg_array -join ','))
 	{
 		Log::increaseIndent();
-		Log::writeToLog("oapi$($funcName):",$($argName_array -join ' , ",", '));
-		$funcName($($argName_array -join ','));
-		Log::writeToLog("\n");
+		Log::writeToLog(IndentString(), "oapi$($funcName):",$($argName_array -join ' , ",", '));
+		$returnType returnValue = p$funcName($($argName_array -join ','));
+		Log::writeToLog("...\n");
+		Log::decreaseIndent();
+		return returnValue;
+	}
+	
+"@
+		}
+		else
+		{
+				$functions += 
+@"
+$returnType  My$funcName($($arg_array -join ','))
+	{
+		Log::increaseIndent();
+		Log::writeToLog(IndentString(), "oapi$($funcName):",$($argName_array -join ' , ",", '));
+		p$funcName($($argName_array -join ','));
+		Log::writeToLog("...\n");
 		Log::decreaseIndent();
 	}
 	
 "@
+		}
 	}
 }
 $header = @"
@@ -66,8 +103,8 @@ $header = @"
 #define CATCH_CTD_HOOKS
 #include "Orbitersdk.h"
 
-bool InstallGlobalOAPIHooks();
-bool DetachGlobalOAPIHooks();
+LONG InstallGlobalOAPIHooks(PVOID ** pFailedPointer);
+LONG DetachGlobalOAPIHooks(PVOID ** pFailedPointer);
 
 $headerContents
 
@@ -81,23 +118,27 @@ $cpp = @"
 #include "Hooks.h"
 #include <Windows.h>
 #include "detours.h"
+#include "Log.h"
 
 $functionPointers
 
-bool InstallGlobalOAPIHooks()
+LONG InstallGlobalOAPIHooks(PVOID ** pFailedPointer)
 {
 	DetourTransactionBegin();
+	DetourSetIgnoreTooSmall(true);
     DetourUpdateThread(GetCurrentThread());
+	PVOID* currentPointer = 0;
 	$installHooks
-	return DetourTransactionCommit();
+	return DetourTransactionCommitEx(pFailedPointer);
 }
 
-bool DetachGlobalOAPIHooks()
+LONG DetachGlobalOAPIHooks(PVOID ** pFailedPointer)
 {
 	DetourTransactionBegin();
+	DetourSetIgnoreTooSmall(true);
     DetourUpdateThread(GetCurrentThread());
 	$detachHooks
-	return DetourTransactionCommit();
+	return DetourTransactionCommitEx(pFailedPointer);
 }
 
 $functions
