@@ -60,8 +60,22 @@ foreach($line in $OAPI_contents)
 			"`r`n" + "$returnType  My$funcName(" + ($arg_array -join ',') + ");`r`n"
 		$headerContents += $header_value
 		$functionPointers += "OSDK_$funcName p$funcName = (OSDK_$funcName)$oapiFuncName;`r`n"
-		$installHooks += "currentPointer = 	&(PVOID&)p$funcName;`r`n	Log::writeToLog(`"Original $oapiFuncName :`",currentPointer,`"\n`");`r`n	DetourAttach(currentPointer, My$funcName);`r`n"
+		$installHooks += "currentPointer = 	&(PVOID&)p$funcName;`r`n	Log::writeToLogDameon(`"Original $oapiFuncName :`",currentPointer,`"\r\n`");`r`n	DetourAttach(currentPointer, My$funcName);`r`n"
 		$detachHooks += "	DetourDetach(&(PVOID&)p$funcName, My$funcName);`r`n"
+		
+		#generate logging string
+		$loggingString = '"('
+		$isFirst = 1
+		foreach($nameArg in $argName_array)
+		{
+			if ($isFirst -ne 1)
+			{
+				$loggingString += " , "
+			}
+			$loggingString += ($nameArg + ':" , ' + $nameArg + ' , "')
+			$isFirst = 0
+		}
+		$loggingString += ')"'
 		if ($returnType -ne "void")
 		{
 		$functions += 
@@ -69,9 +83,9 @@ foreach($line in $OAPI_contents)
 $returnType  My$funcName($($arg_array -join ','))
 	{
 		Log::increaseIndent();
-		Log::writeToLog(IndentString(), "oapi$($funcName):",$($argName_array -join ' , ",", '));
+		Log::writeToLogDameon(IndentString(), "oapi$($funcName):",$($loggingString));
 		$returnType returnValue = p$funcName($($argName_array -join ','));
-		Log::writeToLog("...\n");
+		Log::writeToLogDameon("...\r\n");
 		Log::decreaseIndent();
 		return returnValue;
 	}
@@ -85,9 +99,9 @@ $returnType  My$funcName($($arg_array -join ','))
 $returnType  My$funcName($($arg_array -join ','))
 	{
 		Log::increaseIndent();
-		Log::writeToLog(IndentString(), "oapi$($funcName):",$($argName_array -join ' , ",", '));
+		Log::writeToLogDameon(IndentString(), "oapi$($funcName):",$($loggingString));
 		p$funcName($($argName_array -join ','));
-		Log::writeToLog("...\n");
+		Log::writeToLogDameon("...\r\n");
 		Log::decreaseIndent();
 	}
 	
@@ -103,7 +117,7 @@ $header = @"
 #define CATCH_CTD_HOOKS
 #include "Orbitersdk.h"
 
-LONG InstallGlobalOAPIHooks(PVOID ** pFailedPointer);
+LONG AttachGlobalOAPIHooks(PVOID ** pFailedPointer);
 LONG DetachGlobalOAPIHooks(PVOID ** pFailedPointer);
 
 $headerContents
@@ -122,7 +136,7 @@ $cpp = @"
 
 $functionPointers
 
-LONG InstallGlobalOAPIHooks(PVOID ** pFailedPointer)
+LONG AttachGlobalOAPIHooks(PVOID ** pFailedPointer)
 {
 	DetourTransactionBegin();
 	DetourSetIgnoreTooSmall(true);

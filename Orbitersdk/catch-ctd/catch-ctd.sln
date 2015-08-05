@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "catch-ctd", "catch-ctd.vcxproj", "{16F24619-1307-42DF-9E70-94FA8A49AC2F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "log_dameon", "..\log_dameon\log_dameon.vcxproj", "{3E4E88C5-5A29-42E6-B570-AA9E7688635E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,6 +17,10 @@ Global
 		{16F24619-1307-42DF-9E70-94FA8A49AC2F}.Debug|Win32.Build.0 = Debug|Win32
 		{16F24619-1307-42DF-9E70-94FA8A49AC2F}.Release|Win32.ActiveCfg = Release|Win32
 		{16F24619-1307-42DF-9E70-94FA8A49AC2F}.Release|Win32.Build.0 = Release|Win32
+		{3E4E88C5-5A29-42E6-B570-AA9E7688635E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3E4E88C5-5A29-42E6-B570-AA9E7688635E}.Debug|Win32.Build.0 = Debug|Win32
+		{3E4E88C5-5A29-42E6-B570-AA9E7688635E}.Release|Win32.ActiveCfg = Release|Win32
+		{3E4E88C5-5A29-42E6-B570-AA9E7688635E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

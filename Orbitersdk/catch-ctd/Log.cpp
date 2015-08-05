@@ -1,6 +1,9 @@
 //Copyright (c) 2015 Christopher Johnstone(meson800) and Benedict Haefeli(jedidia)
 //The MIT License - See ../../LICENSE for more info
 #include "Log.h"
+#include <Windows.h>
+#include <sstream>
+#include <string>
 
 std::ostream& operator<<(std::ostream& os, const MFDMODESPEC& ms)
 {
@@ -43,12 +46,56 @@ std::ostream& operator<<(std::ostream& os, const VESSELSTATUS& vs)
 }
 
 int Log::indent = 0;
-std::ofstream Log::logFile;
+std::ostream* Log::logFile = 0;
+HANDLE Log::hWritePipe, Log::hReadPipe;
+
+bool Log::startDameon()
+{
+    //create anonymous pipe
+    if (!CreatePipe(&hReadPipe, &hWritePipe, NULL, 0)) //use default buffer size
+    {
+        //pipe creation failed
+        return false;
+    }
+
+    //make pipe inheritable
+    SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+
+    //start dameon
+    STARTUPINFO         siStartupInfo;
+    PROCESS_INFORMATION piProcessInfo;
+
+    memset(&siStartupInfo, 0, sizeof(siStartupInfo));
+    memset(&piProcessInfo, 0, sizeof(piProcessInfo));
+
+    siStartupInfo.cb = sizeof(siStartupInfo);
+
+    //make the pointer into an argument
+    std::ostringstream arg;
+    arg << hReadPipe;
+    
+
+    if (!CreateProcess(".\\catch-ctd\\log-dameon.exe",     // Application name
+        (LPSTR)(arg.str().c_str()),                 // Application arguments
+        0, 0, TRUE, CREATE_DEFAULT_ERROR_MODE, 0, 0, &siStartupInfo, &piProcessInfo))
+    {
+        //dameon failed to start
+        return false;
+    }
+    return true;
+}
+
+bool Log::stopDameon()
+{
+    CloseHandle(hWritePipe);
+    CloseHandle(hReadPipe);
+    return true;
+}
 
 void Log::clearLog()
 {
-    logFile = std::ofstream("./catch-ctd.log", std::ios::out);
-    logFile.close();
+    std::ofstream tempFile("catch-ctd\\catch-ctd.log", std::ios::out);
+    tempFile.close();
 }
 
 void Log::increaseIndent()

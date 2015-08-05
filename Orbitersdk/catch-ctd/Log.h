@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "Orbitersdk.h"
 
@@ -26,14 +27,34 @@ public:
     static void clearLog();
     static void increaseIndent();
     static void decreaseIndent();
+    static bool startDameon();
+    static bool stopDameon();
 
     template<typename ... Types>
     //public case, opens so we only need one open per write
     static void writeToLog(Types ... rest)
     {
-        logFile = std::ofstream("./catch-ctd.log", std::ios::app);
+        std::ofstream file("catch-ctd\\catch-ctd.log", std::ios::app);
+        logFile = &file;
         writeToLogOstream(rest...);
-        logFile.close();
+        logFile = 0;
+        file.close();
+    }
+
+    template<typename ... Types>
+    static void writeToLogDameon(Types ... rest)
+    {
+        std::ostringstream logString;
+        logFile = &logString;
+        //recursively generate log string
+        writeToLogOstream(rest...);
+        logFile = 0; //reset pointer for next attempt
+
+        //and send it through the dameon
+        std::string result = logString.str();
+        DWORD bytesWritten;
+        WriteFile(hWritePipe, (LPCVOID)result.c_str(), result.size(),&bytesWritten,NULL);
+        
     }
 
 private:
@@ -41,24 +62,33 @@ private:
     //Generic case, prints out using << operator
     static void writeToLogOstream(IndentString first, Types ... rest)
     {
-        for (int i = 0; i < indent; ++i)
+        if (logFile)
         {
-            logFile << "\t";
+            for (int i = 0; i < indent; ++i)
+            {
+                (*logFile) << "\t";
+            }
+            //recurse for other arguments
+            writeToLogOstream(rest...);
         }
-        //recurse for other arguments
-        writeToLogOstream(rest...);
     }
 
     template<typename T, typename ... Types>
     //Generic case, prints out using << operator
     static void writeToLogOstream(T first, Types ... rest)
     {
-        logFile << first;
-        //recurse for other arguments
-        writeToLogOstream(rest...);
+        if (logFile)
+        {
+            (*logFile) << first;
+            //recurse for other arguments
+            writeToLogOstream(rest...);
+        }
     }
     //base case, write out newline
-    static std::ofstream logFile;
+    static std::ostream* logFile;
+
+    //variables
+    static HANDLE hWritePipe, hReadPipe;
     static void writeToLogOstream();
     static int indent;
 };
