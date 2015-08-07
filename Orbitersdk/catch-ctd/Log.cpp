@@ -45,6 +45,48 @@ std::ostream& operator<<(std::ostream& os, const VESSELSTATUS& vs)
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const ELEMENTS& em)
+{
+    os << "(a:" << em.a << ", e:" << em.e << ", i:" << em.i << ", L:" << em.L << 
+        ", omegab:" << em.omegab << ", theta:" << em.theta << ")";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const MATRIX3& mx)
+{
+    os << "(data:" << mx.data
+        << ", m11:" << mx.m11 << ", m12:" << mx.m12 << ", m13:" << mx.m13
+        << ", m21:" << mx.m21 << ", m22:" << mx.m22 << ", m23:" << mx.m23
+        << ", m31:" << mx.m31 << ", m32:" << mx.m32 << ", m33:" << mx.m33
+        << ")";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const MESHGROUP_TRANSFORM& mt)
+{
+    os << "(ngrp:" << mt.ngrp << ", nmesh:" << mt.nmesh << ", P:";
+    switch (mt.transform)
+    {
+    case MESHGROUP_TRANSFORM::ROTATE:
+        os << "(angle:" << mt.P.rotparam.angle << ", axis:" << mt.P.rotparam.axis << ", ref:" << mt.P.rotparam.ref << ")";
+        break;
+    case MESHGROUP_TRANSFORM::SCALE:
+        os << "(scale:" << mt.P.scaleparam.scale << ")";
+        break;
+    case MESHGROUP_TRANSFORM::TRANSLATE:
+        os << "(shift:" << mt.P.transparam.shift << ")";
+        break;
+    }
+    os << ", transform:" << mt.transform << ")";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const COLOUR4& cl)
+{
+    os << "(a:" << cl.a << ", b:" << cl.b << ", g:" << cl.g << ", r:" << cl.r << ")";
+    return os;
+}
+
 int Log::indent = 0;
 std::ostream* Log::logFile = 0;
 HANDLE Log::hWritePipe, Log::hReadPipe;

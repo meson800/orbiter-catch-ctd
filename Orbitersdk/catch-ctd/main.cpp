@@ -49,6 +49,7 @@ DLLCLBK void ExitModule(HINSTANCE hDLL)
     }
 
     Log::writeToLogDameon("Detaching manual hooks...\r\n");
+    Log::increaseIndent();
     if (DetachManualHooks() == NO_ERROR)
     {
         Log::writeToLogDameon("Manual hooks detached successfully\r\n");
@@ -57,6 +58,6 @@ DLLCLBK void ExitModule(HINSTANCE hDLL)
     {
         Log::writeToLogDameon("Manual hooks did not detach successfully\r\n");
     }
-
+    Log::decreaseIndent();
     Log::stopDameon();
 }

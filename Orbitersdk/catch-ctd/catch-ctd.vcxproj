@@ -82,12 +82,14 @@
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ManualHooks.cpp" />
+    <ClCompile Include="VesselProxy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detours.h" />
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="ManualHooks.h" />
+    <ClInclude Include="VesselProxy.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

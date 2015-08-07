@@ -13,13 +13,17 @@
 
 struct IndentString {};
 
-//cout overloads
+//ostream overloads to print out Orbiter structs
 std::ostream& operator<<(std::ostream& os, const MFDMODESPEC& ms);
 std::ostream& operator<<(std::ostream& os, const MFDMODESPECEX& ms);
 std::ostream& operator<<(std::ostream& os, const MFDSPEC& ms);
 std::ostream& operator<<(std::ostream& os, const RECT& rect);
 std::ostream& operator<<(std::ostream& os, const VECTOR3& vec);
 std::ostream& operator<<(std::ostream& os, const VESSELSTATUS& vs);
+std::ostream& operator<<(std::ostream& os, const ELEMENTS& em);
+std::ostream& operator<<(std::ostream& os, const MATRIX3& mx);
+std::ostream& operator<<(std::ostream& os, const MESHGROUP_TRANSFORM& mt);
+std::ostream& operator<<(std::ostream& os, const COLOUR4& cl);
 
 class Log
 {
